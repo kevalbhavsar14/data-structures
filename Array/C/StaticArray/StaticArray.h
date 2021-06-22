@@ -1,5 +1,5 @@
 /*
-array custom data structure
+static array custom data structure
 functions header
 
 insert -> first, last, index
