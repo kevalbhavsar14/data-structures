@@ -8,5 +8,7 @@ Aim  : list test
 void main()
 {
     List* l = createRandomList(10, 1, 10);
+    List* rev = reverseList(l);
     printList(l);
+    printList(rev);
 }

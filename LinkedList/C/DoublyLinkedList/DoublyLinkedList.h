@@ -1,7 +1,7 @@
 /*
-Date: 25-6-2021
+Date: 26-6-2021
 
-data structure: linked list
+data structure: Doubly linked list
 contains:
     Node data type for list
     functions:
@@ -25,15 +25,17 @@ contains:
 typedef struct Node
 {
     int value;
+    struct Node *prev;
     struct Node *next;
 } Node;
 
 typedef struct List
 {
     Node *head;
+    Node *tail;
 } List;
 
-Node* createNode(int value);
+Node* createNode(Node *prev, int value);
 
 List* createEmptyList();
 List* createAscendingList(int size);
@@ -57,3 +59,4 @@ Node* searchList(List *list, int key);
 List* reverseList(List *list);
 
 void printList(List *list);
+void printListReverse(List *list);

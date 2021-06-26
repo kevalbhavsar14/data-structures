@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "List.h"
+#include "DoublyLinkedList.h"
 
-Node* createNode(int value)
+Node* createNode(Node *prev, int value)
 {
     Node* newNode = (Node*)malloc(sizeof(Node));
     newNode->value = value;
+    newNode->prev = prev;
     newNode->next = NULL;
     return newNode;
 }
@@ -14,6 +15,7 @@ List* createEmptyList()
 {
     List* newList = (List*)malloc(sizeof(List));
     newList->head = NULL;
+    newList->tail = NULL;
     return newList;
 }
 
@@ -21,13 +23,14 @@ List* createAscendingList(int size)
 {
     List* newList = (List*)malloc(sizeof(List));
     Node* temp;
-    newList->head = createNode(1);
+    newList->head = createNode(NULL, 1);
     temp = newList->head;
     for (int i = 1; i < size; i++)
     {
-        temp->next = createNode(i + 1);
+        temp->next = createNode(temp, i + 1);
         temp = temp->next;
     }
+    newList->tail = temp;
     return newList;
 }
 
@@ -36,14 +39,15 @@ List* createRandomList(int size, int rangeMin, int rangeMax)
     List* newList = (List*)malloc(sizeof(List));
     Node* temp;
     int randValue = rangeMin + rand() % (rangeMax - rangeMin + 1);
-    newList->head = createNode(randValue);
+    newList->head = createNode(NULL, randValue);
     temp = newList->head;
     for (int i = 1; i < size; i++)
     {
         randValue = rangeMin + rand() % (rangeMax - rangeMin + 1);
-        temp->next = createNode(randValue);
+        temp->next = createNode(temp, randValue);
         temp = temp->next;
     }
+    newList->tail = temp;
     return newList;
 }
 
@@ -51,39 +55,50 @@ List* createListFromArray(int size, int arr[])
 {
     List* newList = (List*)malloc(sizeof(List));
     Node* temp;
-    newList->head = createNode(arr[0]);
+    newList->head = createNode(NULL, arr[0]);
     temp = newList->head;
     for (int i = 1; i < size; i++)
     {
-        temp->next = createNode(arr[i]);
+        temp->next = createNode(temp, arr[i]);
         temp = temp->next;
     }
+    newList->tail = temp;
     return newList;
 }
 
 int insertFirst(List *list, int value)
 {
-    Node* newNode = createNode(value);
+    Node* newNode = createNode(NULL, value);
     newNode->next = list->head;
+    if (list->head == NULL)
+    {
+        list->tail = newNode;
+    }
+    else
+    {
+        list->head->prev = newNode;
+    }
     list->head = newNode;
     return 1;
 }
 
 int insertLast(List *list, int value)
 {
-    Node* newNode = createNode(value);
-    Node* temp = list->head;
-    while (temp->next != NULL)
+    Node* newNode = createNode(list->tail, value);
+    if (list->head == NULL)
     {
-        temp = temp->next;
+        list->head = newNode;
     }
-    temp->next = newNode;
+    else
+    {
+        list->tail->next = newNode;
+    }
+    list->tail = newNode;
     return 1;
 }
 
 int insertAtIndex(List *list, int value, int index)
 {
-    Node* newNode = createNode(value);
     Node* temp = list->head;
     int found = 0;
     if (index == 0)
@@ -95,7 +110,16 @@ int insertAtIndex(List *list, int value, int index)
     {
         if (i == index - 1)
         {
+            Node* newNode = createNode(temp, value);
             newNode->next = temp->next;
+            if (temp->next == NULL)
+            {
+                list->tail = newNode;
+            }
+            else
+            {
+                temp->next->prev = newNode;
+            }
             temp->next = newNode;
             found = 1;
             break;
@@ -112,7 +136,6 @@ int insertAtIndex(List *list, int value, int index)
 
 int insertAscending(List *list, int value)
 {
-    Node* newNode = createNode(value);
     Node* temp = list->head;
     if (temp->value > value)
     {
@@ -127,7 +150,9 @@ int insertAscending(List *list, int value)
         }
         temp = temp->next;
     }
+    Node* newNode = createNode(temp, value);
     newNode->next = temp->next;
+    temp->next->prev = newNode;
     temp->next = newNode;
     return 1;
 }
@@ -142,6 +167,7 @@ int deleteFirst(List *list)
     Node* del = list->head;
     int value;
     list->head = list->head->next;
+    list->head->prev = NULL;
     value = del->value;
     free(del);
     return value;
@@ -154,15 +180,10 @@ int deleteLast(List *list)
         printf("Error: list is empty\n");
         return 0;
     }
-    Node* temp = list->head;
-    Node* del;
+    Node* del = list->tail;
     int value;
-    while (temp->next->next != NULL)
-    {
-        temp = temp->next;
-    }
-    del = temp->next;
-    temp->next = NULL;
+    list->tail = list->tail->prev;
+    list->tail->next = NULL;
     value = del->value;
     free(del);
     return value;
@@ -183,18 +204,27 @@ int deleteAtIndex(List *list, int index)
     Node* temp = list->head;
     Node* del;
     int value;
-    for (int i = 0; temp != NULL; i++)
+    for (int i = 0; temp->next != NULL; i++)
     {
         if (i == index - 1)
         {
             del = temp->next;
             temp->next = temp->next->next;
+            if (temp->next == NULL)
+            {
+                list->tail = temp;
+            }
+            else
+            {
+                temp->next->prev = temp;
+            }
             value = del->value;
             free(del);
             return value;
         }
         temp = temp->next;
     }
+    printf("Error: Index out of bounds\n");
     return 0;
 }
 
@@ -208,6 +238,14 @@ int deleteByValueFirstOcc(List *list, int key)
         {
             del = temp->next;
             temp->next = temp->next->next;
+            if (temp->next == NULL)
+            {
+                list->tail = temp;
+            }
+            else
+            {
+                temp->next->prev = temp;
+            }
             free(del);
             return 1;
         }
@@ -236,6 +274,14 @@ int deleteByValueLastOcc(List *list, int key)
     }
     del = delPrev->next;
     delPrev->next = delPrev->next->next;
+    if (temp->next == NULL)
+    {
+        list->tail = delPrev;
+    }
+    else
+    {
+        delPrev->next->prev = delPrev;
+    }
     free(del);
     return 1;
 }
@@ -251,6 +297,14 @@ int deleteByValueAllOcc(List *list, int key)
         {
             del = temp->next;
             temp->next = temp->next->next;
+            if (temp->next == NULL)
+            {
+                list->tail = temp;
+            }
+            else
+            {
+                temp->next->prev = temp;
+            }
             free(del);
             found = 1;
             continue;
@@ -297,6 +351,17 @@ void printList(List *list)
     {
         printf("%d ", temp->value);
         temp = temp->next;
+    }
+    printf("\n");
+}
+
+void printListReverse(List *list)
+{
+    Node* temp = list->tail;
+    while (temp != NULL)
+    {
+        printf("%d ", temp->value);
+        temp = temp->prev;
     }
     printf("\n");
 }
